@@ -44,21 +44,24 @@ class reviewer(object):
             if page_data==r.text:
                 return page
             page_data=r.text
-            data=json.loads(page_data)
-            if len(data['comments']) and page<max_page:
-                print '\n\nsore=',self.score_dict[score],'\tpage=',page
-                for review in data['comments']:
-                    if review['referenceId']==self.product_id:
-                        self.count+=1
-                        do='insert into goods_'+self.product_id+' (id,nickname,content,score,classify) values(%s,%s,%s,%s,%s)'
-                        try:
-                            self.cursor.execute(do,(str(self.count),review['nickname'],review['content'],review['score'],self.score_dict[score]))
-                        except Exception as e:
-                            print e
-                        print self.count,review['nickname'],review['content'],review['score']
-                page+=1
-            else:
-                return page
+            try:
+                data=json.loads(page_data)
+                if len(data['comments']) and page<max_page:
+                    print '\n\nsore=',self.score_dict[score],'\tpage=',page
+                    for review in data['comments']:
+                        if review['referenceId']==self.product_id:
+                            self.count+=1
+                            do='insert into goods_'+self.product_id+' (id,nickname,content,score,classify) values(%s,%s,%s,%s,%s)'
+                            try:
+                                self.cursor.execute(do,(str(self.count),review['nickname'],review['content'],review['score'],self.score_dict[score]))
+                            except Exception as e:
+                                print e
+                            print self.count,review['nickname'],review['content'],review['score']
+                    page+=1
+                else:
+                    return page
+            except ValueError as e:
+                print e
 
     def select(self):
         self.result_data=[]
@@ -76,7 +79,7 @@ class reviewer(object):
             print r[0],r[1]
 
     def classify(self,data):
-        new_grocery=Grocery('classify')
+        new_grocery=Grocery('classify/'+self.product_id)
         new_grocery.load()
         print '\n\n分类结果：'
         classify_data=new_grocery.predict(data)
@@ -97,16 +100,16 @@ class reviewer(object):
             self.find_review(score=1)
             self.find_review(score=2)
             self.find_review(score=3)
-        self.conn.commit()
-        self.select()
-        if not self.result_data:
-            print '训练样本为空，请检查商品ID是否正确后重新爬取商品评价！'
-            return False
-        self.conn.close()
-        print '\n\n正在训练分类器．．．'
-        grocery=Grocery('classify')
-        grocery.train(self.result_data)
-        grocery.save()
-        print '训练成功！'
+            self.conn.commit()
+            self.select()
+            if not self.result_data:
+                print '训练样本为空，请检查商品ID是否正确后重新爬取商品评价！'
+                return False
+            self.conn.close()
+            print '\n\n正在训练分类器．．．'
+            grocery=Grocery('classify/'+self.product_id)
+            grocery.train(self.result_data)
+            grocery.save()
+            print '训练成功！'
         return True
 
