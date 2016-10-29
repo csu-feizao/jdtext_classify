@@ -18,11 +18,11 @@ class menu(object):
         print '#   2. 语音评价     #'
         print '#   0. 退出　　     #'
         print '#####################'
-        choose=input('请选择评价模式：')
-        if choose==1:
+        choose=raw_input('请选择评价模式：')
+        if choose=='1':
             data=raw_input('请输入您的评价：')
             j.classify(data)
-        elif choose==2:
+        elif choose=='2':
             r=record.recoder()
             r.save_wave('recoder.wave')
             s=speech_recognition.api()
@@ -30,11 +30,11 @@ class menu(object):
             with open('recongition.txt') as f:
                 data=f.read()
                 j.classify(data)
-        elif choose==0:
+        elif choose=='0':
             return
         else:
             print '输入错误，请重新输入：'
-            return self.run
+            return self.run()
 
     def start(self):
         flag=raw_input('\n\n是否现在开始评价？y/n:')
